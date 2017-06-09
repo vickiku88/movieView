@@ -8,7 +8,14 @@
 
 import UIKit
 
-class TableViewCell: UITableViewCell {
+class MovieCell: UITableViewCell {
+
+
+  @IBOutlet weak var title: UILabel!
+  @IBOutlet weak var overview: UILabel!
+  @IBOutlet weak var imgView: UIImageView!
+
+  
 
     override func awakeFromNib() {
         super.awakeFromNib()
