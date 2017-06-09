@@ -14,7 +14,9 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
 
   @IBOutlet weak var tableView: UITableView!
   var movies: [NSDictionary]?
-  var endpoint: String!
+  var endpoint: NSString!
+
+
 
   override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
     super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
@@ -23,17 +25,24 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
     super.init(coder: aDecoder)
   }
 
+
     override func viewDidLoad() {
       super.viewDidLoad()
 
       tableView.delegate = self
       tableView.dataSource = self
 
-
         // Do any additional setup after loading the view.
 
+      let refreshControl = UIRefreshControl()
+      refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), for: UIControlEvents.valueChanged)
+      tableView.insertSubview(refreshControl, at: 0)
+
+
+      UINavigationBar.appearance().tintColor = UIColor.black
+
       let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-      let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint)?api_key=\(apiKey)")
+      let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
 
       let request = URLRequest(
         url: url! as URL,
@@ -76,7 +85,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell =  tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
 
-    let movie = movies?[indexPath.row] as? NSDictionary
+    let movie = movies?[indexPath.row]
     let title = movie?["original_title"] as! String
     let overview = movie?["overview"] as! String
     let posterpath = movie?["poster_path"] as! String
@@ -124,6 +133,41 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
       print("prepare")
 
     }
+
+  func refreshControlAction(_ refreshControl: UIRefreshControl) {
+
+    // ... Create the URLRequest `myRequest` ...
+    let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
+    let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
+
+    let request = URLRequest(
+      url: url! as URL,
+      cachePolicy: NSURLRequest.CachePolicy.reloadIgnoringLocalCacheData,
+      timeoutInterval: 10)
+
+    // Configure session so that completion handler is executed on main UI thread
+    let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
+    let task: URLSessionDataTask = session.dataTask(with: request) { (data: Data?, response: URLResponse?, error: Error?) in
+
+      // ... Use the new data to update the data source ...
+      if let data = data {
+        if let responseDictionary = try! JSONSerialization.jsonObject( with: data, options:[]) as? NSDictionary {
+          MBProgressHUD.hide(for: self.view, animated: true)
+
+          //print("response: \(responseDictionary)")
+          self.movies = responseDictionary["results"] as? [NSDictionary]
+          self.tableView.reloadData()
+        }
+      }
+
+      // Reload the tableView now that there is new data
+      self.tableView.reloadData()
+
+      // Tell the refreshControl to stop spinning
+      refreshControl.endRefreshing()
+    }
+    task.resume()
+  }
 
 
 
