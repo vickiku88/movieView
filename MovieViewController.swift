@@ -15,6 +15,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
   @IBOutlet weak var tableView: UITableView!
   var movies: [NSDictionary]?
   var endpoint: NSString!
+  var pagenum = 1
 
 
 
@@ -51,7 +52,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
       UINavigationBar.appearance().tintColor = UIColor.black
 
       let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-      let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
+      let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)&page=\(pagenum)")
 
       let request = URLRequest(
         url: url! as URL,
@@ -163,7 +164,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         if let responseDictionary = try! JSONSerialization.jsonObject( with: data, options:[]) as? NSDictionary {
           MBProgressHUD.hide(for: self.view, animated: true)
 
-          //print("response: \(responseDictionary)")
+          //print("response2!: \(responseDictionary)")
           self.movies = responseDictionary["results"] as? [NSDictionary]
           self.tableView.reloadData()
         }
@@ -185,38 +186,34 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
     // Handle scroll behavior here
 
     if (!isMoreDataLoading) {
-      isMoreDataLoading = true
-      print("should be true",isMoreDataLoading)
 
-        // Calculate the position of one screen length before the bottom of the results
-      /*let scrollViewContentHeight = self.tableView.contentSize.height
-      print(scrollViewContentHeight)
-      let scrollOffsetThreshold = scrollViewContentHeight - self.tableView.bounds.size.height
-      print(scrollOffsetThreshold)*/
-      let offsetY = scrollView.contentOffset.y
-      let contentHeight = scrollView.contentSize.height
 
-      let frame = CGRect(x: 0, y: tableView.contentSize.height, width: tableView.bounds.size.width, height: InfiniteScrollActivityView.defaultHeight)
-      loadingMoreView?.frame = frame
-      loadingMoreView!.startAnimating()
 
-      // When the user has scrolled past the threshold, start requesting
-      //if(scrollView.contentOffset.y > scrollOffsetThreshold && tableView.isDragging) {
-      if offsetY > contentHeight - scrollView.frame.size.height {
+      let currentOffset = scrollView.contentOffset.y
+      print(currentOffset)
+      let maximumOffset = scrollView.contentSize.height - scrollView.frame.size.height
+      print(maximumOffset)
+      let deltaOffset = maximumOffset - currentOffset
+      print(deltaOffset)
+
+      if deltaOffset <= 0 {
         isMoreDataLoading = true
         print("secondtrue")
-        // ... Code to load more results ...
         loadMoreData()
 
       }
 
+    let frame = CGRect(x: 0, y: tableView.contentSize.height, width: tableView.bounds.size.width, height: InfiniteScrollActivityView.defaultHeight)
+      loadingMoreView?.frame = frame
+      loadingMoreView!.startAnimating()
     }
   }
   func loadMoreData() {
 
     // ... Create the NSURLRequest (myRequest) ...
     let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-    let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
+    pagenum = pagenum + 1
+    let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)&page=\(pagenum)")
 
     let request = URLRequest(
       url: url! as URL,
@@ -240,13 +237,15 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
 
         // ... Use the new data to update the data source ...
       if let data = data {
+        print("data")
       if let responseDictionary = try! JSONSerialization.jsonObject( with: data, options:[]) as? NSDictionary {
         MBProgressHUD.hide(for: self.view, animated: true)
 
-
-        print("response:1")
         self.movies = responseDictionary["results"] as? [NSDictionary]
+        print("response:1 ")
+        //print(self.movies!)
         self.tableView.reloadData()
+
         }
       }
 
@@ -292,3 +291,5 @@ class InfiniteScrollActivityView: UIView {
     self.activityIndicatorView.startAnimating()
   }
 }
+
+
