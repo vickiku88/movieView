@@ -38,6 +38,15 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
       refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), for: UIControlEvents.valueChanged)
       tableView.insertSubview(refreshControl, at: 0)
 
+      let frame = CGRect(x: 0, y: tableView.contentSize.height, width: tableView.bounds.size.width, height: InfiniteScrollActivityView.defaultHeight)
+      loadingMoreView = InfiniteScrollActivityView(frame: frame)
+      loadingMoreView!.isHidden = true
+      tableView.addSubview(loadingMoreView!)
+
+      var insets = tableView.contentInset
+      insets.bottom += InfiniteScrollActivityView.defaultHeight
+      tableView.contentInset = insets
+
 
       UINavigationBar.appearance().tintColor = UIColor.black
 
@@ -100,7 +109,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
 
     cell.title.text = title as String
     cell.overview.text = overview as String
-    cell.imgView.setImageWith(imageURL as! URL)
+    cell.imgView.setImageWith(imageURL! as URL)
 
     return cell
   }
@@ -169,6 +178,117 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
     task.resume()
   }
 
+  var isMoreDataLoading = false
+  var loadingMoreView:InfiniteScrollActivityView?
+
+  func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    // Handle scroll behavior here
+
+    if (!isMoreDataLoading) {
+      isMoreDataLoading = true
+      print("should be true",isMoreDataLoading)
+
+        // Calculate the position of one screen length before the bottom of the results
+      /*let scrollViewContentHeight = self.tableView.contentSize.height
+      print(scrollViewContentHeight)
+      let scrollOffsetThreshold = scrollViewContentHeight - self.tableView.bounds.size.height
+      print(scrollOffsetThreshold)*/
+      let offsetY = scrollView.contentOffset.y
+      let contentHeight = scrollView.contentSize.height
+
+      let frame = CGRect(x: 0, y: tableView.contentSize.height, width: tableView.bounds.size.width, height: InfiniteScrollActivityView.defaultHeight)
+      loadingMoreView?.frame = frame
+      loadingMoreView!.startAnimating()
+
+      // When the user has scrolled past the threshold, start requesting
+      //if(scrollView.contentOffset.y > scrollOffsetThreshold && tableView.isDragging) {
+      if offsetY > contentHeight - scrollView.frame.size.height {
+        isMoreDataLoading = true
+        print("secondtrue")
+        // ... Code to load more results ...
+        loadMoreData()
+
+      }
+
+    }
+  }
+  func loadMoreData() {
+
+    // ... Create the NSURLRequest (myRequest) ...
+    let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
+    let url = NSURL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
+
+    let request = URLRequest(
+      url: url! as URL,
+      cachePolicy: NSURLRequest.CachePolicy.reloadIgnoringLocalCacheData,
+      timeoutInterval: 10)
+
+    // Configure session so that completion handler is executed on main UI thread
+    let session = URLSession(
+      configuration: URLSessionConfiguration.default,
+      delegate:nil,
+      delegateQueue:OperationQueue.main
+    )
+
+    let task : URLSessionDataTask = session.dataTask(with: request, completionHandler: { (data, response, error) in
+
+        // Update flag
+        self.isMoreDataLoading = false
+        print("should be false",self.isMoreDataLoading)
+        self.loadingMoreView!.stopAnimating()
 
 
+        // ... Use the new data to update the data source ...
+      if let data = data {
+      if let responseDictionary = try! JSONSerialization.jsonObject( with: data, options:[]) as? NSDictionary {
+        MBProgressHUD.hide(for: self.view, animated: true)
+
+
+        print("response:1")
+        self.movies = responseDictionary["results"] as? [NSDictionary]
+        self.tableView.reloadData()
+        }
+      }
+
+    })
+    task.resume()
+  }
+
+
+}
+
+class InfiniteScrollActivityView: UIView {
+  var activityIndicatorView: UIActivityIndicatorView = UIActivityIndicatorView()
+  static let defaultHeight:CGFloat = 60.0
+
+  required init?(coder aDecoder: NSCoder) {
+    super.init(coder: aDecoder)
+    setupActivityIndicator()
+  }
+
+  override init(frame aRect: CGRect) {
+    super.init(frame: aRect)
+    setupActivityIndicator()
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    activityIndicatorView.center = CGPoint(x: self.bounds.size.width/2, y: self.bounds.size.height/2)
+  }
+
+  func setupActivityIndicator() {
+    activityIndicatorView.activityIndicatorViewStyle = .gray
+    activityIndicatorView.hidesWhenStopped = true
+    self.addSubview(activityIndicatorView)
+  }
+
+  func stopAnimating() {
+    self.activityIndicatorView.stopAnimating()
+    self.isHidden = true
+  }
+
+  func startAnimating() {
+    self.isHidden = false
+    self.activityIndicatorView.startAnimating()
+  }
 }
