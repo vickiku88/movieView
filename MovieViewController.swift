@@ -16,6 +16,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
   var movies: [NSDictionary]?
   var endpoint: NSString!
   var pagenum = 1
+  var dict2: [NSDictionary]?
 
 
 
@@ -242,8 +243,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         MBProgressHUD.hide(for: self.view, animated: true)
 
         self.movies = responseDictionary["results"] as? [NSDictionary]
-        print("response:1 ")
-        //print(self.movies!)
+
         self.tableView.reloadData()
 
         }
