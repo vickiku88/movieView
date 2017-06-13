@@ -16,6 +16,52 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
     // Override point for customization after application launch.
+
+    window = UIWindow(frame: UIScreen.main.bounds)
+
+    let storyboard  = UIStoryboard(name: "Main", bundle: nil)
+
+    let nowPlayingNavController = storyboard.instantiateViewController(withIdentifier: "MoviesNavController") as! UINavigationController
+
+    let nowPlayingViewController = nowPlayingNavController.topViewController as! MovieViewController
+
+    nowPlayingViewController.endpoint = "now_playing"
+    nowPlayingNavController.tabBarItem.title = "now playing"
+    nowPlayingNavController.tabBarItem.image = UIImage(named: "play.png")
+
+    let topRatedNavController = storyboard.instantiateViewController(withIdentifier: "MoviesNavController") as! UINavigationController
+
+    let topRatedViewController = topRatedNavController.topViewController as! MovieViewController
+
+    topRatedViewController.endpoint = "top_rated"
+    topRatedNavController.tabBarItem.title = "top rated"
+    topRatedNavController.tabBarItem.image = UIImage(named: "play.png")
+
+    let popularNavController = storyboard.instantiateViewController(withIdentifier: "MoviesNavController") as! UINavigationController
+
+    let popularViewController = popularNavController.topViewController as! MovieViewController
+
+    popularViewController.endpoint = "popular"
+    popularNavController.tabBarItem.title = "popular"
+    popularNavController.tabBarItem.image = UIImage(named: "play.png")
+
+    let upcomingNavController = storyboard.instantiateViewController(withIdentifier: "MoviesNavController") as! UINavigationController
+
+    let upcomingViewController = upcomingNavController.topViewController as! MovieViewController
+
+    upcomingViewController.endpoint = "upcoming"
+    upcomingNavController.tabBarItem.title = "upcoming"
+    upcomingNavController.tabBarItem.image = UIImage(named: "play.png")
+
+
+    let tabBarController = UITabBarController()
+    tabBarController.viewControllers = [nowPlayingNavController, topRatedNavController, popularNavController, upcomingNavController]
+
+    UITabBar.appearance().tintColor = UIColor.black
+
+    window?.rootViewController = tabBarController
+    window?.makeKeyAndVisible()
+
     return true
   }
 
